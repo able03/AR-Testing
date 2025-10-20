@@ -239,7 +239,7 @@ function Customization(){
 
             {/* Model Textures */}
             <div style={{ margin: '20px 0' }}>
-                <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>Model Textures (Preview Only - Not in AR)</div>
+                <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>Model Textures</div>
                 <button className="btn" onClick={() => setModelTexture("/textures/fabric.png")}>Fabric</button>
                 <button className="btn" onClick={() => setModelTexture("/textures/metal.png")}>Metal</button>
                 <button className="btn" onClick={() => setModelTexture("/textures/wood.jpg")}>Wood</button>
