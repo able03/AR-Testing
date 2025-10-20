@@ -31,5 +31,5 @@ function Cube({color, height, width, depth, texture}){
     )
 }
 
-createRoot(document.getElementById('root')).render(<Cube/>)
+// createRoot(document.getElementById('root')).render(<Cube/>)
 export default Cube;

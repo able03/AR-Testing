@@ -25,19 +25,67 @@ function Customization(){
             loader.load(model, resolve, undefined, reject)
           );
       
+          // Clone the loaded model
           const cloned = loadedModel.scene.clone(true);
       
-          // Apply customizations - remove ALL textures to avoid stack overflow
+          // Load texture if provided and convert to data URL
+          let textureToUse = null;
+          if (modelTexture) {
+            try {
+              const textureLoader = new THREE.TextureLoader();
+              const loadedTexture = await new Promise((resolve, reject) => {
+                textureLoader.load(
+                  modelTexture,
+                  (tex) => {
+                    // Convert texture to canvas data URL
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = tex.image;
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Create new texture from data URL
+                    const dataURL = canvas.toDataURL('image/png');
+                    const newTexture = textureLoader.load(dataURL);
+                    newTexture.wrapS = tex.wrapS;
+                    newTexture.wrapT = tex.wrapT;
+                    newTexture.minFilter = THREE.LinearFilter;
+                    newTexture.magFilter = THREE.LinearFilter;
+                    resolve(newTexture);
+                  },
+                  undefined,
+                  (err) => {
+                    console.warn('Texture loading failed:', err);
+                    resolve(null);
+                  }
+                );
+              });
+              textureToUse = loadedTexture;
+              
+              // Wait for texture to be ready
+              await new Promise(resolve => setTimeout(resolve, 100));
+            } catch (err) {
+              console.warn('Could not process texture:', err);
+            }
+          }
+      
+          // Apply customizations with texture
           cloned.traverse((child) => {
             if (child.isMesh) {
+              // Create material with texture if available
               child.material = new THREE.MeshStandardMaterial({
                 color: color || "#ffffff",
+                map: textureToUse,
                 roughness: 0.5,
                 metalness: 0.3,
               });
+              child.material.needsUpdate = true;
             }
           });
       
+          // Apply scale
           cloned.scale.set(width, height, depth);
       
           // Use dynamic import for GLTFExporter to avoid issues
@@ -66,7 +114,7 @@ function Customization(){
               }
               
               setExportedModel(url);
-              console.log("✅ Exported for AR:", url);
+              console.log("Exported for AR:", url);
               setIsExporting(false);
             },
             (error) => {
@@ -118,13 +166,13 @@ function Customization(){
             {exportedModel && <ARViewer glbPath={exportedModel} />}
 
             {/* Cube Preview (optional) */}
-            <Cube 
+            {/* <Cube 
                 color={color} 
                 height={height} 
                 width={width} 
                 depth={depth} 
                 texture={texture}
-            />
+            /> */}
 
             {/* Colors */}
             <div style={{ margin: '20px 0' }}>
@@ -138,12 +186,12 @@ function Customization(){
             </div>
 
             {/* Textures for Cube */}
-            <div style={{ margin: '20px 0' }}>
+            {/* <div style={{ margin: '20px 0' }}>
                 <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>Cube Textures</div>
                 <button className="btn" onClick={() => setTexture("/aba.webp")}>Wood</button>
                 <button className="btn" onClick={() => setTexture("/cotton.webp")}>Flowers</button>
                 <button className="btn" onClick={() => setTexture("/cotton 2.webp")}>Group</button>
-            </div>
+            </div> */}
 
             {/* Dimensions */}
             <div style={{ margin: '20px 0' }}>
