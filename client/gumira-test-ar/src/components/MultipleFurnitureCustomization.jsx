@@ -5,8 +5,7 @@ import { useState, useRef } from "react";
 import  Model  from "./Model";
 
 
-function MultipleFurnitureCustomization(){
-    const [furnitures, setFurnitures] = useState([]);
+function MultipleFurnitureCustomization({ furnitures, setFurnitures, onViewInAR }){
     const [selectedId, setSelectedId] = useState(null);
     const transformRef = useRef();
 
@@ -120,6 +119,9 @@ function MultipleFurnitureCustomization(){
               }}
             />
           </div>
+          <button onClick={() => onViewInAR(selectedFurniture.path)}>
+            View in AR
+          </button>
         </div>
       )}
 
