@@ -1,8 +1,8 @@
 import {Canvas} from "@react-three/fiber";
-import { OrbitControls } from "three-stdlib";
+import { OrbitControls, TransformControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useState, useRef } from "react";
-import { Model } from "./Model";
+import  Model  from "./Model";
 
 
 function MultipleFurnitureCustomization(){
