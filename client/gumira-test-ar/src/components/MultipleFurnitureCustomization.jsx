@@ -1,13 +1,39 @@
 import {Canvas} from "@react-three/fiber";
-import { OrbitControls, TransformControls } from "@react-three/drei";
+import { OrbitControls, TransformControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import  Model  from "./Model";
+
+// New component for the ground plane to handle its own texture loading
+function GroundPlane({ color, texturePath }) {
+    // Unconditional hook call for texture loading
+    const texture = useTexture(texturePath || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+
+    useEffect(() => {
+        if (texturePath) {
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(10, 10); // Tile the texture
+            texture.needsUpdate = true;
+        }
+    }, [texture, texturePath]);
+
+    return (
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[20, 20]} />
+            <meshStandardMaterial
+                color={color}
+                map={texturePath ? texture : null}
+            />
+        </mesh>
+    )
+}
 
 
 function MultipleFurnitureCustomization({ furnitures, setFurnitures, onViewInAR }){
     const [selectedId, setSelectedId] = useState(null);
     const transformRef = useRef();
+    const [planeColor, setPlaneColor] = useState("#dddddd");
+    const [planeTexture, setPlaneTexture] = useState(null);
 
     const availableModels = [
         { name: "Wooden Cabinet", path: "/3d_wooden_cabinet.glb" },
@@ -28,7 +54,8 @@ function MultipleFurnitureCustomization({ furnitures, setFurnitures, onViewInAR 
                 position: [Math.random() * 4-2, 0, Math.random() * 4-2],
                 rotation: [0,0,0],
                 scale: [1,1,1],
-                color: "#ffffff",
+                color: "#cccccc", // Default color
+                texturePath: "/textures/wood.jpg", // Default texture
             },
         ]);    
     };
@@ -54,76 +81,93 @@ function MultipleFurnitureCustomization({ furnitures, setFurnitures, onViewInAR 
                 ))}
             </div>
 
- {/* Editing Panel */}
- {selectedFurniture && (
-        <div
-          style={{
-            padding: "10px",
-            border: "1px solid #aaa",
-            marginBottom: "10px",
-            background: "#f8f8f8",
-            borderRadius: "8px",
-          }}
-        >
-          <h3>Editing: {selectedFurniture.path.split("/").pop()}</h3>
-          <div>
-            <label>Color: </label>
-            <input
-              type="color"
-              value={selectedFurniture.color}
-              onChange={(e) =>
-                handleUpdate(selectedId, { color: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <label>Texture: </label>
-            <button
-              onClick={() =>
-                handleUpdate(selectedId, { texturePath: "/textures/wood.jpg" })
-              }
-            >
-              Wood
-            </button>
-            <button
-              onClick={() =>
-                handleUpdate(selectedId, { texturePath: "/textures/fabric.png" })
-              }
-            >
-              Fabric
-            </button>
-            <button
-              onClick={() =>
-                handleUpdate(selectedId, { texturePath: "/textures/metal.png" })
-              }
-            >
-              Metal
-            </button>
-            <button
-              onClick={() => handleUpdate(selectedId, { texturePath: null })}
-            >
-              None
-            </button>
-          </div>
-          <div>
-            <label>Scale: </label>
-            <input
-              type="range"
-              min="0.5"
-              max="2"
-              step="0.1"
-              value={selectedFurniture.scale[0]}
-              onChange={(e) => {
-                const v = parseFloat(e.target.value);
-                handleUpdate(selectedId, { scale: [v, v, v] });
-              }}
-            />
-          </div>
-          <button onClick={() => onViewInAR(selectedFurniture.path)}>
-            View in AR
-          </button>
-        </div>
-      )}
+            {/* Editing Panel */}
+            {selectedFurniture && (
+                    <div
+                    style={{
+                        padding: "10px",
+                        border: "1px solid #aaa",
+                        marginBottom: "10px",
+                        background: "#f8f8f8",
+                        borderRadius: "8px",
+                    }}
+                    >
+                    <h3>Editing: {selectedFurniture.path.split("/").pop()}</h3>
+                    <div>
+                        <label>Color: </label>
+                        <input
+                        type="color"
+                        value={selectedFurniture.color}
+                        onChange={(e) =>
+                            handleUpdate(selectedId, { color: e.target.value })
+                        }
+                        />
+                    </div>
+                    <div>
+                        <label>Texture: </label>
+                        <button
+                        onClick={() =>
+                            handleUpdate(selectedId, { texturePath: "/textures/wood.jpg" })
+                        }
+                        >
+                        Wood
+                        </button>
+                        <button
+                        onClick={() =>
+                            handleUpdate(selectedId, { texturePath: "/textures/fabric.png" })
+                        }
+                        >
+                        Fabric
+                        </button>
+                        <button
+                        onClick={() =>
+                            handleUpdate(selectedId, { texturePath: "/textures/metal.png" })
+                        }
+                        >
+                        Metal
+                        </button>
+                        <button
+                        onClick={() => handleUpdate(selectedId, { texturePath: null })}
+                        >
+                        None
+                        </button>
+                    </div>
+                    <div>
+                        <label>Scale: </label>
+                        <input
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        value={selectedFurniture.scale[0]}
+                        onChange={(e) => {
+                            const v = parseFloat(e.target.value);
+                            handleUpdate(selectedId, { scale: [v, v, v] });
+                        }}
+                        />
+                    </div>
+                    <button onClick={() => onViewInAR(selectedFurniture.path)}>
+                        View in AR
+                    </button>
+                    </div>
+            )}
+
+            {/* Plane Customization Panel */}
+            <div style={{ padding: "10px", border: "1px solid #aaa", marginBottom: "10px", background: "#f8f8f8", borderRadius: "8px" }}>
+                <h3>Plane Customization</h3>
+                <div>
+                    <label>Color: </label>
+                    <input type="color" value={planeColor} onChange={(e) => setPlaneColor(e.target.value)} />
+                </div>
+                <div>
+                    <label>Texture: </label>
+                    <button onClick={() => setPlaneTexture("/textures/wood.jpg")}>Wood</button>
+                    <button onClick={() => setPlaneTexture("/textures/fabric.png")}>Fabric</button>
+                    <button onClick={() => setPlaneTexture("/textures/metal.png")}>Metal</button>
+                    <button onClick={() => setPlaneTexture(null)}>None</button>
+                </div>
+            </div>
+
 
             <div
              style={{
@@ -139,70 +183,67 @@ function MultipleFurnitureCustomization({ furnitures, setFurnitures, onViewInAR 
                     <directionalLight position={[5,10,5]} intensity={1}/>
                     <OrbitControls makeDefault/>
 
-                    <mesh rotation={[-Math.PI / 2,0,0]}>
-                        <planeGeometry args={[20,20]}/>
-                        <meshStandardMaterial color={"#dddddd"}/>
-                    </mesh>
+                    <GroundPlane color={planeColor} texturePath={planeTexture} />
 
                     {furnitures.map((f) => {
-            const isSelected = f.id === selectedId;
-            return (
-              <group
-                key={f.id}
-                position={f.position}
-                rotation={f.rotation}
-                scale={f.scale}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSelect(f.id);
-                }}
-              >
-                <Model
-                  path={f.path}
-                  color={f.color}
-                  texturePath={f.texturePath}
-                  scaleX={1}
-                  scaleY={1}
-                  scaleZ={1}
-                />
+                        const isSelected = f.id === selectedId;
+                        return (
+                        <group
+                            key={f.id}
+                            position={f.position}
+                            rotation={f.rotation}
+                            scale={f.scale}
+                            onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelect(f.id);
+                            }}
+                        >
+                            <Model
+                            path={f.path}
+                            color={f.color}
+                            texturePath={f.texturePath}
+                            scaleX={1}
+                            scaleY={1}
+                            scaleZ={1}
+                            />
 
-                {/* Outline / Selection Indicator */}
-                {isSelected && (
-                  <mesh>
-                    <boxGeometry args={[1.2, 1.2, 1.2]} />
-                    <meshBasicMaterial
-                      color="yellow"
-                      wireframe
-                      transparent
-                      opacity={0.3}
-                    />
-                  </mesh>
-                )}
+                            {/* Outline / Selection Indicator */}
+                            {isSelected && (
+                            <mesh>
+                                <boxGeometry args={[1.2, 1.2, 1.2]} />
+                                <meshBasicMaterial
+                                color="yellow"
+                                wireframe
+                                transparent
+                                opacity={0.3}
+                                />
+                            </mesh>
+                            )}
 
-                {/* Transform Controls for selected furniture */}
-                {isSelected && (
-                  <TransformControls
-                    ref={transformRef}
-                    object={null}
-                    mode="translate"
-                    onObjectChange={() => {
-                      const obj = transformRef.current.object;
-                      if (obj) {
-                        handleUpdate(f.id, {
-                          position: [
-                            obj.position.x,
-                            obj.position.y,
-                            obj.position.z,
-                          ],
-                        });
-                      }
-                    }}
-                  >
-                    <primitive object={new THREE.Object3D()} />
-                  </TransformControls>
-                )}
-              </group>
-            );
+                            {/* Transform Controls for selected furniture */}
+                            {isSelected && (
+                            <TransformControls
+                                ref={transformRef}
+                                object={null}
+                                mode="translate"
+                                onObjectChange={() => {
+                                const obj = transformRef.current.object;
+                                if (obj) {
+                                    handleUpdate(f.id, {
+                                    position: [
+                                        obj.position.x,
+                                        obj.position.y,
+                                        obj.position.z,
+                                    ],
+                                    });
+                                }
+                                }}
+                            >
+                                <primitive object={new THREE.Object3D()} />
+                            </TransformControls>
+                            )}
+                        </group>
+                        );
           })}
                 </Canvas>
             </div>
