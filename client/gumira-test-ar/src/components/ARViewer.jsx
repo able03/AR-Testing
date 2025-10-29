@@ -5,28 +5,6 @@ import * as THREE from "three";
 import { useState, useRef, useEffect } from "react";
 import Model from "./Model";
 
-// AR Support Detection Component
-function ARSupportDetector({ onSupportDetected }) {
-    useEffect(() => {
-        async function checkARSupport() {
-            if ('xr' in navigator) {
-                try {
-                    const isSupported = await navigator.xr.isSessionSupported('immersive-ar');
-                    onSupportDetected(isSupported);
-                } catch (error) {
-                    console.error('Error checking AR support:', error);
-                    onSupportDetected(false);
-                }
-            } else {
-                onSupportDetected(false);
-            }
-        }
-        checkARSupport();
-    }, [onSupportDetected]);
-
-    return null;
-}
-
 
 function ARFurniture({ furniture, onSelect, isSelected, furnitureRefs }) {
     const groupRef = useRef();
@@ -75,7 +53,6 @@ function ARFurniture({ furniture, onSelect, isSelected, furnitureRefs }) {
 function ARViewer({ furnitures, setFurnitures, onCloseAR }) {
     const [selectedId, setSelectedId] = useState(null);
     const [transformMode, setTransformMode] = useState("translate");
-    const [isARSupported, setIsARSupported] = useState(null);
     const [showAddMenu, setShowAddMenu] = useState(false);
     const [showCustomizeMenu, setShowCustomizeMenu] = useState(false);
     const transformRef = useRef();
@@ -133,39 +110,16 @@ function ARViewer({ furnitures, setFurnitures, onCloseAR }) {
     }, [selectedId]);
 
 
-    // Show AR not supported message
-    if (isARSupported === false) {
-        return (
-            <div style={{ width: "100%", height: "100vh", padding: "20px" }}>
-                <h2>AR Not Supported</h2>
-                <p>Your device does not support WebXR AR. This feature requires:</p>
-                <ul>
-                    <li>Android device with ARCore support</li>
-                    <li>iOS device (iOS 12+) with ARKit support</li>
-                    <li>Chrome or Safari browser</li>
-                </ul>
-                <p>You can still use the 3D customization view to design your furniture layout.</p>
-                <button onClick={onCloseAR} style={{ marginTop: "20px", padding: "10px 20px" }}>
-                    Back to 3D Viewer
-                </button>
-            </div>
-        );
-    }
-
     return (
         <div style={{ width: "100%", height: "100vh" }}>
-            <ARSupportDetector onSupportDetected={setIsARSupported} />
-
-            {isARSupported !== null && (
-                <>
-                    <ARButton
-                        sessionInit={{
-                            requiredFeatures: ['hit-test', 'dom-overlay'],
-                            domOverlay: { root: document.body }
-                        }}
-                    />
-                    <Canvas>
-                        <XR>
+            <ARButton
+                sessionInit={{
+                    requiredFeatures: ['hit-test'],
+                    optionalFeatures: ['dom-overlay']
+                }}
+            />
+            <Canvas>
+                <XR>
                             <ambientLight intensity={0.8} />
                             <directionalLight position={[5, 10, 5]} intensity={1.2} />
 
@@ -350,8 +304,6 @@ function ARViewer({ furnitures, setFurnitures, onCloseAR }) {
                             Add furniture using the "Add Furniture" button above
                         </div>
                     )}
-                </>
-            )}
         </div>
     );
 }

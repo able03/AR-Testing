@@ -96,11 +96,11 @@ Available models hardcoded in `MultipleFurnitureCustomization.jsx:39-46`:
 
 ### AR Mode Enhancements
 - **Full In-AR Editing**: Add, customize, and delete furniture directly in AR space without exiting
-- **AR Support Detection**: Automatically detects WebXR AR capability with user-friendly fallback
 - **Multiple Furniture Support**: Fixed rendering to display all furniture models (previously only showed one)
 - **Model Size Normalization**: All models automatically normalized to consistent sizes regardless of source file dimensions
 - **Enhanced UI**: Clean overlay controls with add/customize menus in AR
 - **Transform Modes in AR**: Move, rotate, and scale furniture in AR space
+- **iOS Compatibility**: Simplified AR session initialization to work properly on iOS Safari/ARKit devices
 
 ### Model System
 - **Auto-normalization**: Models are automatically scaled to 1 unit based on largest dimension
@@ -115,9 +115,14 @@ Available models hardcoded in `MultipleFurnitureCustomization.jsx:39-46`:
 - **Browsers**: Chrome 79+ (Android), Safari 13+ (iOS)
 
 ### Fallback Behavior
-- Non-AR devices show informative error message with device requirements
-- Users redirected back to 3D customization mode
+- ARButton component handles AR availability detection automatically
+- Button only appears when WebXR AR is supported on device
 - All furniture configurations persist when switching between modes
+
+### Important Notes
+- The `dom-overlay` feature is optional - iOS Safari may not support it
+- ARButton from @react-three/xr has built-in detection, no custom detection needed
+- Session initialization uses minimal required features for maximum compatibility
 
 ## Known Issues
 
