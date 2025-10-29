@@ -29,11 +29,12 @@ function GroundPlane({ color, texturePath }) {
 }
 
 
-function MultipleFurnitureCustomization({ furnitures, setFurnitures, onViewInAR }){
+function MultipleFurnitureCustomization({ furnitures, setFurnitures }){
     const [selectedId, setSelectedId] = useState(null);
     const transformRef = useRef();
     const [planeColor, setPlaneColor] = useState("#dddddd");
     const [planeTexture, setPlaneTexture] = useState(null);
+    const [transformMode, setTransformMode] = useState("translate"); // New state for transform mode
 
     const availableModels = [
         { name: "Wooden Cabinet", path: "/3d_wooden_cabinet.glb" },
@@ -51,23 +52,42 @@ function MultipleFurnitureCustomization({ furnitures, setFurnitures, onViewInAR 
             {
                 id,
                 path: model.path,
-                position: [Math.random() * 4-2, 0, Math.random() * 4-2],
-                rotation: [0,0,0],
-                scale: [1,1,1],
+                position: [Math.random() * 4 - 2, 0, Math.random() * 4 - 2],
+                rotation: [0, 0, 0], // Initial rotation
+                scale: [1, 1, 1],
                 color: "#cccccc", // Default color
                 texturePath: "/textures/wood.jpg", // Default texture
             },
-        ]);    
+        ]);
     };
 
     const handleSelect = (id) => setSelectedId(id);
     const selectedFurniture = furnitures.find((f) => f.id === selectedId);
 
     const handleUpdate = (id, updatedProps) => {
-        setFurnitures((prev) => 
-            prev.map((f) => (f.id === id ? {...f, ...updatedProps} : f))
+        setFurnitures((prev) =>
+            prev.map((f) => (f.id === id ? { ...f, ...updatedProps } : f))
         );
     };
+
+    // Attach and detach TransformControls
+    useEffect(() => {
+        if (transformRef.current) {
+            const controls = transformRef.current;
+            const selectedObject = furnitures.find(f => f.id === selectedId);
+            if (selectedObject) {
+                const sceneObject = controls.parent.getObjectByProperty('uuid', selectedObject.uuid);
+                if (sceneObject) {
+                    controls.attach(sceneObject);
+                }
+            }
+
+            return () => {
+                controls.detach();
+            };
+        }
+    }, [selectedId, furnitures]);
+
 
     return(
         <>
@@ -93,6 +113,11 @@ function MultipleFurnitureCustomization({ furnitures, setFurnitures, onViewInAR 
                     }}
                     >
                     <h3>Editing: {selectedFurniture.path.split("/").pop()}</h3>
+                    {/* Transform Mode Toggle */}
+                    <div>
+                        <button onClick={() => setTransformMode("translate")}>Move</button>
+                        <button onClick={() => setTransformMode("rotate")}>Rotate</button>
+                    </div>
                     <div>
                         <label>Color: </label>
                         <input
@@ -146,9 +171,19 @@ function MultipleFurnitureCustomization({ furnitures, setFurnitures, onViewInAR 
                         }}
                         />
                     </div>
-                    <button onClick={() => onViewInAR(selectedFurniture.path)}>
-                        View in AR
-                    </button>
+                    {/* Rotation Sliders */}
+                    <div>
+                        <label>Rotate X: </label>
+                        <input type="range" min="-3.14" max="3.14" step="0.01" value={selectedFurniture.rotation[0]} onChange={(e) => handleUpdate(selectedId, { rotation: [parseFloat(e.target.value), selectedFurniture.rotation[1], selectedFurniture.rotation[2]] })} />
+                    </div>
+                    <div>
+                        <label>Rotate Y: </label>
+                        <input type="range" min="-3.14" max="3.14" step="0.01" value={selectedFurniture.rotation[1]} onChange={(e) => handleUpdate(selectedId, { rotation: [selectedFurniture.rotation[0], parseFloat(e.target.value), selectedFurniture.rotation[2]] })} />
+                    </div>
+                    <div>
+                        <label>Rotate Z: </label>
+                        <input type="range" min="-3.14" max="3.14" step="0.01" value={selectedFurniture.rotation[2]} onChange={(e) => handleUpdate(selectedId, { rotation: [selectedFurniture.rotation[0], selectedFurniture.rotation[1], parseFloat(e.target.value)] })} />
+                    </div>
                     </div>
             )}
 
@@ -219,32 +254,30 @@ function MultipleFurnitureCustomization({ furnitures, setFurnitures, onViewInAR 
                                 />
                             </mesh>
                             )}
-
-                            {/* Transform Controls for selected furniture */}
-                            {isSelected && (
-                            <TransformControls
-                                ref={transformRef}
-                                object={null}
-                                mode="translate"
-                                onObjectChange={() => {
-                                const obj = transformRef.current.object;
-                                if (obj) {
-                                    handleUpdate(f.id, {
-                                    position: [
-                                        obj.position.x,
-                                        obj.position.y,
-                                        obj.position.z,
-                                    ],
-                                    });
-                                }
-                                }}
-                            >
-                                <primitive object={new THREE.Object3D()} />
-                            </TransformControls>
-                            )}
                         </group>
                         );
           })}
+          {/* Centralized TransformControls */}
+          {selectedFurniture && (
+              <TransformControls
+                  ref={transformRef}
+                  mode={transformMode}
+                  onObjectChange={() => {
+                      const obj = transformRef.current.object;
+                      if (obj) {
+                          if (transformMode === 'translate') {
+                              handleUpdate(selectedFurniture.id, {
+                                  position: [obj.position.x, obj.position.y, obj.position.z],
+                              });
+                          } else if (transformMode === 'rotate') {
+                              handleUpdate(selectedFurniture.id, {
+                                  rotation: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
+                              });
+                          }
+                      }
+                  }}
+              />
+          )}
                 </Canvas>
             </div>
 

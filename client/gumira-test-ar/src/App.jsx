@@ -5,30 +5,35 @@ import MultipleFurnitureCustomization from './components/MultipleFurnitureCustom
 
 function App() {
   const [furnitures, setFurnitures] = useState([]);
-  const [arModelPath, setArModelPath] = useState(null);
+  const [arMode, setArMode] = useState(false);
 
-  const handleViewInAR = (path) => {
-    setArModelPath(path);
+  const handleViewInAR = () => {
+    setArMode(true);
   };
 
   const handleCloseAR = () => {
-    setArModelPath(null);
+    setArMode(false);
   };
 
   return (
     <>
       <h1>AR Furniture Customizer</h1>
-      {arModelPath ? (
-        <div>
-          <button onClick={handleCloseAR}>Close AR</button>
-          <ARViewer glbPath={arModelPath} />
-        </div>
-      ) : (
-        <MultipleFurnitureCustomization
+      {arMode ? (
+        <ARViewer
           furnitures={furnitures}
           setFurnitures={setFurnitures}
-          onViewInAR={handleViewInAR}
+          onCloseAR={handleCloseAR}
         />
+      ) : (
+        <>
+          <button onClick={handleViewInAR} style={{ marginBottom: "10px" }}>
+            View All in AR
+          </button>
+          <MultipleFurnitureCustomization
+            furnitures={furnitures}
+            setFurnitures={setFurnitures}
+          />
+        </>
       )}
     </>
   )
